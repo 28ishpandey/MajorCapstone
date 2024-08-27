@@ -1,13 +1,9 @@
-package com.food.restaurant.entity;
+package com.food.restaurant.dto;
 
-import jakarta.persistence.*;
 import lombok.Data;
 
 @Data
-@Entity
-public class FoodItem {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class FoodItemResponseDTO {
     private Long id;
     private Long categoryId;
     private Long restaurantId;
@@ -15,5 +11,4 @@ public class FoodItem {
     private Double price;
     private Boolean availability;
     private Boolean isVeg;
-
 }

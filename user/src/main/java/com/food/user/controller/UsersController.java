@@ -1,8 +1,12 @@
 package com.food.user.controller;
 
+import com.food.user.dto.ForgotPasswordDTO;
+import com.food.user.dto.LoginDTO;
 import com.food.user.dto.UserCreateDTO;
 import com.food.user.dto.UserResponseDTO;
+import com.food.user.error.CustomException;
 import com.food.user.service.UsersService;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,14 +18,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/users")
 public class UsersController {
-
     @Autowired
     private UsersService userService;
 
-
-
     @PostMapping
-    public ResponseEntity<UserResponseDTO> registerUser(@RequestBody UserCreateDTO userCreateDTO) {
+    public ResponseEntity<UserResponseDTO> registerUser(@Valid @RequestBody UserCreateDTO userCreateDTO) {
         log.info("Registering user with email: {}", userCreateDTO.getEmail());
         try {
             UserResponseDTO responseDTO = userService.createUser(userCreateDTO);
@@ -82,6 +83,44 @@ public class UsersController {
         } catch (Exception e) {
             log.error("Error deleting user with ID: {}", userId, e);
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+    @PostMapping("/login")
+    public ResponseEntity<UserResponseDTO> login(@RequestBody LoginDTO loginDTO) {
+        log.info("Login attempt with email: {}", loginDTO.getEmail());
+        try {
+            UserResponseDTO responseDTO = userService.login(loginDTO);
+            log.info("Login successful");
+            return new ResponseEntity<>(responseDTO, HttpStatus.OK);
+        } catch (CustomException e) {
+            log.error("Login failed", e);
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestBody ForgotPasswordDTO forgotPasswordDTO) {
+        log.info("Forgot password request received for email: {}", forgotPasswordDTO.getEmail());
+        try {
+            userService.forgotPassword(forgotPasswordDTO);
+            log.info("Forgot password email sent");
+            return new ResponseEntity<>("Password reset email sent", HttpStatus.OK);
+        } catch (CustomException e) {
+            log.error("Failed to process forgot password request", e);
+            return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @PutMapping("/{userId}/change-password")
+    public ResponseEntity<UserResponseDTO> changePassword(@PathVariable Long userId, @RequestBody String newPassword) {
+        log.info("Password change request for user ID: {}", userId);
+        try {
+            UserResponseDTO responseDTO = userService.changePassword(userId, newPassword);
+            log.info("Password changed successfully");
+            return new ResponseEntity<>(responseDTO, HttpStatus.OK);
+        } catch (CustomException e) {
+            log.error("Failed to change password", e);
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
     }
 }
