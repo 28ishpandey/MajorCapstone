@@ -3,7 +3,7 @@ package com.food.user.userTests;
 import com.food.user.controller.UsersController;
 import com.food.user.dto.UserCreateDTO;
 import com.food.user.dto.UserResponseDTO;
-import com.food.user.error.CustomException;
+import com.food.user.exception.CustomException;
 import com.food.user.service.UsersService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

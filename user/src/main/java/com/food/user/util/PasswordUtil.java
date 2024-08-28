@@ -10,7 +10,6 @@ public class PasswordUtil {
         return Base64.getEncoder().encodeToString(password.getBytes());
     }
 
-
     public static String decryptPassword(String encryptedPassword) {
         return new String(Base64.getDecoder().decode(encryptedPassword));
     }

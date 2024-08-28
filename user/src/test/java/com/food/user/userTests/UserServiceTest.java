@@ -3,7 +3,7 @@ package com.food.user.userTests;
 import com.food.user.dto.UserCreateDTO;
 import com.food.user.dto.UserResponseDTO;
 import com.food.user.entity.Users;
-import com.food.user.error.CustomException;
+import com.food.user.exception.CustomException;
 import com.food.user.repository.UserRepository;
 import com.food.user.service.UsersService;
 import com.food.user.util.PasswordUtil;

@@ -3,7 +3,7 @@ package com.food.user.addressTests;
 import com.food.user.controller.AddressController;
 import com.food.user.dto.AddressCreateDTO;
 import com.food.user.dto.AddressResponseDTO;
-import com.food.user.error.CustomException;
+import com.food.user.exception.CustomException;
 import com.food.user.service.AddressService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

@@ -5,7 +5,9 @@ import com.food.user.dto.LoginDTO;
 import com.food.user.dto.UserCreateDTO;
 import com.food.user.dto.UserResponseDTO;
 import com.food.user.entity.Users;
-import com.food.user.error.CustomException;
+
+import com.food.user.exception.AccountNotFoundException;
+import com.food.user.exception.InvalidCredentials;
 import com.food.user.repository.UserRepository;
 import com.food.user.util.PasswordUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +18,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 @Slf4j
 @Service
@@ -28,24 +31,28 @@ public class UsersService {
 
     public UserResponseDTO createUser(UserCreateDTO userCreateDTO) {
         log.info("Creating user with email: {}", userCreateDTO.getEmail());
-        Users user = new Users();
-        user.setEmail(userCreateDTO.getEmail());
-        user.setContactNumber(userCreateDTO.getContactNumber());
-        String encryptedPassword = PasswordUtil.encryptPassword(userCreateDTO.getPassword());
-        user.setPassword(encryptedPassword);
-        user.setFirstName(userCreateDTO.getFirstName());
-        user.setLastName(userCreateDTO.getLastName());
-        user.setWalletBalance(1000.0);
+        Optional<Users> existingUser = userRepository.findByEmail(userCreateDTO.getEmail());
+        if(existingUser.isEmpty()) {
+            Users user = new Users();
+            user.setEmail(userCreateDTO.getEmail());
+            user.setContactNumber(userCreateDTO.getContactNumber());
+            String encryptedPassword = PasswordUtil.encryptPassword(userCreateDTO.getPassword());
+            user.setPassword(encryptedPassword);
+            user.setFirstName(userCreateDTO.getFirstName());
+            user.setLastName(userCreateDTO.getLastName());
+            user.setWalletBalance(1000.0);
 
-        Users savedUser = userRepository.save(user);
-        log.info("User created with ID: {}", savedUser.getUserId());
-        return convertToResponseDTO(savedUser);
+            Users savedUser = userRepository.save(user);
+            log.info("User created with ID: {}", savedUser.getUserId());
+            return convertToResponseDTO(savedUser);
+        }
+        throw new AccountNotFoundException();
     }
 
     public UserResponseDTO getUserById(Long userId) {
         log.info("Fetching user with ID: {}", userId);
         Users user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND.value()));
+                .orElseThrow(AccountNotFoundException::new);
         return convertToResponseDTO(user);
     }
 
@@ -59,7 +66,7 @@ public class UsersService {
     public UserResponseDTO updateUser(Long userId, UserCreateDTO userCreateDTO) {
         log.info("Updating user with ID: {}", userId);
         Users user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND.value()));
+                .orElseThrow(AccountNotFoundException::new);
 
         user.setEmail(userCreateDTO.getEmail());
         user.setContactNumber(userCreateDTO.getContactNumber());
@@ -75,7 +82,7 @@ public class UsersService {
     public void deleteUser(Long userId) {
         log.info("Deleting user with ID: {}", userId);
         Users user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND.value()));
+                .orElseThrow(AccountNotFoundException::new);
         userRepository.delete(user);
         log.info("User deleted with ID: {}", userId);
     }
@@ -83,12 +90,12 @@ public class UsersService {
     public UserResponseDTO login(LoginDTO loginDTO) {
         log.info("Attempting login for email: {}", loginDTO.getEmail());
         Users user = userRepository.findByEmail(loginDTO.getEmail())
-                .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND.value()));
+                .orElseThrow(AccountNotFoundException::new);
 
         String decryptedPassword = PasswordUtil.decryptPassword(user.getPassword());
 
         if (!decryptedPassword.equals(loginDTO.getPassword())) {
-            throw new CustomException("Invalid credentials", HttpStatus.UNAUTHORIZED.value());
+            throw new InvalidCredentials();
         }
 
         log.info("Login successful for user ID: {}", user.getUserId());
@@ -98,7 +105,7 @@ public class UsersService {
     public void forgotPassword(ForgotPasswordDTO forgotPasswordDTO) {
         log.info("Processing forgot password for email: {}", forgotPasswordDTO.getEmail());
         Users user = userRepository.findByEmail(forgotPasswordDTO.getEmail())
-                .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND.value()));
+                .orElseThrow(AccountNotFoundException::new);
 
         String decryptedPassword = PasswordUtil.decryptPassword(user.getPassword());
 
@@ -120,7 +127,7 @@ public class UsersService {
     public UserResponseDTO changePassword(Long userId, String newPassword) {
         log.info("Changing password for user ID: {}", userId);
         Users user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException("User not found", HttpStatus.NOT_FOUND.value()));
+                .orElseThrow(AccountNotFoundException::new);
 
         String encryptedPassword = PasswordUtil.encryptPassword(newPassword);
         user.setPassword(encryptedPassword);
