@@ -3,15 +3,15 @@ package com.food.user.service;
 import com.food.user.dto.AddressCreateDTO;
 import com.food.user.dto.AddressResponseDTO;
 import com.food.user.entity.Address;
-
+import com.food.user.exception.AddressAlreadyExistException;
 import com.food.user.exception.AddressNotFoundException;
 import com.food.user.repository.AddressRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,17 +23,21 @@ public class AddressService {
 
     public AddressResponseDTO createAddress(AddressCreateDTO addressCreateDTO) {
         log.info("Creating address for user ID: {}", addressCreateDTO.getUserId());
-        Address address = new Address();
-        address.setUserId(addressCreateDTO.getUserId());
-        address.setStreet(addressCreateDTO.getStreet());
-        address.setCity(addressCreateDTO.getCity());
-        address.setState(addressCreateDTO.getState());
-        address.setCountry(addressCreateDTO.getCountry());
-        address.setPostalCode(addressCreateDTO.getPostalCode());
+        Optional<Address> existingTitle = addressRepository.findByAddressTitle(addressCreateDTO.getAddressTitle());
+        if(existingTitle.isPresent()) {
+            Address address = new Address();
+            address.setUserId(addressCreateDTO.getUserId());
+            address.setStreet(addressCreateDTO.getStreet());
+            address.setCity(addressCreateDTO.getCity());
+            address.setState(addressCreateDTO.getState());
+            address.setCountry(addressCreateDTO.getCountry());
+            address.setPostalCode(addressCreateDTO.getPostalCode());
 
-        Address savedAddress = addressRepository.save(address);
-        log.info("Address created with ID: {}", savedAddress.getAddressId());
-        return convertToResponseDTO(savedAddress);
+            Address savedAddress = addressRepository.save(address);
+            log.info("Address created with ID: {}", savedAddress.getAddressId());
+            return convertToResponseDTO(savedAddress);
+        }
+        throw new AddressAlreadyExistException();
     }
 
     public AddressResponseDTO getAddressById(Long addressId) {
@@ -72,6 +76,7 @@ public class AddressService {
         addressRepository.delete(address);
         log.info("Address deleted with ID: {}", addressId);
     }
+
     private AddressResponseDTO convertToResponseDTO(Address address) {
         AddressResponseDTO responseDTO = new AddressResponseDTO();
         responseDTO.setAddressId(address.getAddressId());

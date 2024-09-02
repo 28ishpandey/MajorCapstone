@@ -1,5 +1,6 @@
 package com.food.restaurant.controller;
 
+import com.food.restaurant.dto.LoginDTO;
 import com.food.restaurant.dto.RestaurantCreateDTO;
 import com.food.restaurant.dto.RestaurantResponseDTO;
 import com.food.restaurant.service.RestaurantService;
@@ -21,51 +22,38 @@ public class RestaurantController {
 
     @PostMapping
     public ResponseEntity<String> createRestaurant(@RequestBody RestaurantCreateDTO restaurantCreateDTO) {
-        try {
-            return restaurantService.createRestaurant(restaurantCreateDTO);
-        } catch (Exception e) {
-            log.error("Error creating restaurant: {}", e.getMessage());
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        log.info("Registering user with email: {}", restaurantCreateDTO.getEmail());
+        return restaurantService.createRestaurant(restaurantCreateDTO);
+
     }
 
     @PutMapping("/{restaurantId}")
     public ResponseEntity<String> updateRestaurant(@PathVariable Long restaurantId, @RequestBody RestaurantCreateDTO restaurantCreateDTO) {
-        try {
-            return restaurantService.updateRestaurant(restaurantId, restaurantCreateDTO);
-        } catch (Exception e) {
-            log.error("Error updating restaurant: {}", e.getMessage());
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return restaurantService.updateRestaurant(restaurantId, restaurantCreateDTO);
+
     }
 
     @DeleteMapping("/{restaurantId}")
     public ResponseEntity<String> deleteRestaurant(@PathVariable Long restaurantId) {
-        try {
-            return restaurantService.deleteRestaurant(restaurantId);
-        } catch (Exception e) {
-            log.error("Error deleting restaurant: {}", e.getMessage());
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return restaurantService.deleteRestaurant(restaurantId);
+
     }
 
     @GetMapping("/{restaurantId}")
     public ResponseEntity<RestaurantResponseDTO> getRestaurantById(@PathVariable Long restaurantId) {
-        try {
-            return restaurantService.getRestaurantById(restaurantId);
-        } catch (Exception e) {
-            log.error("Error retrieving restaurant: {}", e.getMessage());
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return restaurantService.getRestaurantById(restaurantId);
     }
 
     @GetMapping
     public ResponseEntity<List<RestaurantResponseDTO>> getAllRestaurants() {
-        try {
             return restaurantService.getAllRestaurants();
-        } catch (Exception e) {
-            log.error("Error retrieving restaurants: {}", e.getMessage());
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+
+    }
+    @PostMapping("/login")
+    public ResponseEntity<RestaurantResponseDTO> login(@RequestBody LoginDTO loginDTO) {
+        log.info("Login attempt with email: {}", loginDTO.getEmail());
+        RestaurantResponseDTO responseDTO = restaurantService.login(loginDTO);
+        log.info("Login successful");
+        return new ResponseEntity<>(responseDTO, HttpStatus.OK);
     }
 }

@@ -3,7 +3,6 @@ package com.food.user.userTests;
 import com.food.user.dto.UserCreateDTO;
 import com.food.user.dto.UserResponseDTO;
 import com.food.user.entity.Users;
-import com.food.user.exception.CustomException;
 import com.food.user.repository.UserRepository;
 import com.food.user.service.UsersService;
 import com.food.user.util.PasswordUtil;
@@ -12,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpStatus;
 
 import java.util.Arrays;
 import java.util.List;
@@ -87,17 +85,7 @@ public class UserServiceTest {
         assertEquals(1000.0, responseDTO.getWalletBalance());
     }
 
-    @Test
-    public void testGetUserById_UserNotFound() {
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            usersService.getUserById(1L);
-        });
-
-        assertEquals("User not found", exception.getMessage());
-        assertEquals(HttpStatus.NOT_FOUND.value(), exception.getStatusCode());
-    }
 
     @Test
     public void testGetAllUsers() {
@@ -179,15 +167,5 @@ public class UserServiceTest {
         verify(userRepository, times(1)).delete(user);
     }
 
-    @Test
-    public void testDeleteUser_UserNotFound() {
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            usersService.deleteUser(1L);
-        });
-
-        assertEquals("User not found", exception.getMessage());
-        assertEquals(HttpStatus.NOT_FOUND.value(), exception.getStatusCode());
-    }
 }

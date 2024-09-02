@@ -1,4 +1,4 @@
-package com.food.user.exception;
+package com.food.restaurant.error;
 
 /**
  * Custom exception for invalid credentials.

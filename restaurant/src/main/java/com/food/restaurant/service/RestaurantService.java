@@ -1,10 +1,12 @@
 package com.food.restaurant.service;
 
 import com.food.restaurant.constant.ResponseConstants;
+import com.food.restaurant.dto.LoginDTO;
 import com.food.restaurant.dto.RestaurantCreateDTO;
 import com.food.restaurant.dto.RestaurantResponseDTO;
 import com.food.restaurant.entity.Restaurant;
-import com.food.restaurant.error.CustomException;
+import com.food.restaurant.error.InvalidCredentials;
+import com.food.restaurant.error.RestaurantNotFoundException;
 import com.food.restaurant.repository.RestaurantRepository;
 import com.food.restaurant.util.PasswordUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +39,7 @@ public class RestaurantService {
     }
 
     public ResponseEntity<String> updateRestaurant(Long restaurantId,RestaurantCreateDTO restaurantCreateDTO){
-        Restaurant restaurant = restaurantRepository.findById(restaurantId).orElseThrow(()-> new CustomException(ResponseConstants.RESTAURANT_NOT_FOUND,HttpStatus.NOT_FOUND.value()));
+        Restaurant restaurant = restaurantRepository.findById(restaurantId).orElseThrow(RestaurantNotFoundException::new);
         restaurant.setEmail(restaurantCreateDTO.getEmail());
         restaurant.setContactNumber(restaurantCreateDTO.getContactNumber());
         restaurant.setPassword(restaurantCreateDTO.getPassword());
@@ -51,7 +53,7 @@ public class RestaurantService {
 
     public ResponseEntity<String> deleteRestaurant(Long restaurantId) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new CustomException(ResponseConstants.RESTAURANT_NOT_FOUND, HttpStatus.NOT_FOUND.value()));
+                .orElseThrow(RestaurantNotFoundException::new);
 
         restaurantRepository.delete(restaurant);
         log.info("Restaurant deleted: {}", restaurant.getName());
@@ -61,7 +63,7 @@ public class RestaurantService {
 
     public ResponseEntity<RestaurantResponseDTO> getRestaurantById(Long restaurantId) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new CustomException(ResponseConstants.RESTAURANT_NOT_FOUND, HttpStatus.NOT_FOUND.value()));
+                .orElseThrow(RestaurantNotFoundException::new);
 
         RestaurantResponseDTO response = convertToResponseDTO(restaurant);
         log.info("Restaurant retrieved: {}", restaurant.getName());
@@ -77,6 +79,20 @@ public class RestaurantService {
 
         log.info("All restaurants retrieved");
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    public RestaurantResponseDTO login(LoginDTO loginDTO) {
+        log.info("Attempting login for email: {}", loginDTO.getEmail());
+        Restaurant restaurant = restaurantRepository.findByEmail(loginDTO.getEmail())
+          .orElseThrow(RestaurantNotFoundException::new);
+
+        String decryptedPassword = PasswordUtil.decryptPassword(restaurant.getPassword());
+
+        if (!decryptedPassword.equals(loginDTO.getPassword())) {
+            throw new InvalidCredentials();
+        }
+
+        log.info("Login successful for user ID: {}", restaurant.getRestaurantId());
+        return convertToResponseDTO(restaurant);
     }
 
     private RestaurantResponseDTO convertToResponseDTO(Restaurant restaurant) {
